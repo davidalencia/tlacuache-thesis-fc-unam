@@ -18,7 +18,10 @@
   titulo: [Titulo],
   grado: [Licenciatura],
   autor: [Autor],
-  asesor: [Asesor],
+  asesor: (
+    nombre: "Nombre",
+    genero: "fem"
+  ),
   lugar: [Ciudad de México, México],
   agno: [#datetime.today().year()],
   bibliography: [],
@@ -26,6 +29,15 @@
 )={
   // configuración páginas y contadores
   set document(title: titulo)
+
+  let asesor-texto = if asesor.at("genero", default: "fem") == "fem" {
+    "DIRECTORA DE TESIS"
+  } else if asesor.at("genero", default: "fem") == "masc" {
+    "DIRECTOR DE TESIS"
+  } else {
+    "DIRECTORX DE TESIS"
+  }
+
   set page("us-letter", margin: (top: 4cm, bottom: 2cm), header: context{
     if here().page() == 1 {
       return
@@ -49,48 +61,55 @@
   set par(first-line-indent: 1em)
 
   set block(spacing: 1.5em)
-
   // Portada
-  place(line(length: 70%, start: (30%, 10%), stroke: 3pt))
-  place(line(length: 70%, start: (30%, 13%)))
-
-  place(line(length: 60%, start: (10%, 20%), angle: 90deg, stroke: 3pt))
-  place(line(length: 60%, start: (13%, 20%), angle: 90deg))
-
-  place(image("./escudos/UNAM_crest_black.svg", width: 100pt))
-  place(bottom, image("./escudos/FC_crest_black.svg", width: 100pt))
-
   set align(center)
-  move(dx: 70pt, [
-    #v(1.2cm)
-    #text(1.5em, [Universidad Nacional Autónoma de México])
+  set par(justify: false)
+  let ancho-escudo=90pt
+  grid(
+    columns: (ancho-escudo, 1fr),
+    rows: (auto, 1fr, auto),
+    column-gutter: 1.5em,
+    row-gutter: 1.2em,
 
-    #v(1.2cm)
-    #text(1.5em, [Facultad de Ciencias])
+    // Fila 1: escudo UNAM + universidad
+    image("escudos/UNAM_crest_black.svg", width: 100%),
+    align(horizon)[
+      #text(1.5em, smallcaps[Universidad Nacional Autónoma \ de México])
+      // doble linea: un bloque vacío con borde superior grueso e inferior fino
+      #block(width: 100%, height: 0.9em, stroke: (top: 2.5pt, bottom: 1pt))
+    ],
 
-    #v(2cm)
-    #text(1.5em, [#titulo])
+    // Fila 2: triple linea vertical + cuerpo
+    stack(
+      dir: ltr,
+      spacing: 10pt,
+      ..(1pt, 2.5pt, 1pt).map(w => block(height: 100%, stroke: (left: w))),
+    ),
+    block(height: 100%)[
+      #text(1.3em, smallcaps[Facultad de Ciencias])
+      #v(1fr)
+      #text(1.2em, upper(titulo))
+      #v(1fr)
+      #text(3em, tracking: 0.6em)[TESIS]
+      #v(1em)
+      QUE PARA OBTENER EL GRADO DE:
+      #v(0.4em)
+      #upper(grado)
+      #v(1fr)
+      #text(tracking: 0.5em)[PRESENTA:]
+      #v(0.4em)
+      #upper(autor)
+    ],
 
-    #v(2cm)
-    #text(3em, spacing: 200%, [T e s i s])
-
-    #upper([QUE PARA OPTAR POR EL GRADO DE:])
-
-    #grado
-
-    #v(1cm)
-    #upper([Presenta])
-
-    #autor
-
-    #v(1cm)
-    #upper([DIRECTOR DE TESIS:])
-
-    #asesor
-
-    #v(1cm)
-    #lugar, #agno.
-  ])
+    // Fila 3: escudo FC + tutor y fecha
+    image("escudos/FC_crest_black.svg", width: 100%),
+    align(horizon)[
+      #upper(asesor-texto) \
+      #asesor.nombre
+      #v(1em)
+      #lugar, #agno
+    ],
+  )
 
   pagebreak()
 
